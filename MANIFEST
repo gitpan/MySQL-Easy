@@ -1,0 +1,10 @@
+Changes
+Easy.pm
+MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+README
+t/main.t
+distclean
+makeitfromscratch
+Distro
