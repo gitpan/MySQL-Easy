@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.21 2002/08/28 21:04:27 jettero Exp $
+# $Id: Easy.pm,v 1.23 2002/08/30 11:01:20 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -10,7 +10,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.16";
+our $VERSION = "1.17";
 use vars qw($AUTOLOAD);
 
 return 1;
@@ -22,7 +22,7 @@ sub AUTOLOAD {
     $sub = $1 if $sub =~ m/::(\w+)$/;
 
     my $e = $SIG{__WARN__}; $SIG{__WARN__} = sub {};
-    my $r = $this->handle->$sub( @_ ) or croak $this->errstr;
+    my $r = $this->handle->$sub( @_ ) or croak "MySQL::Easy AUTOLOAD of $sub failed: " . $this->errstr;
     $SIG{__WARN__} = $e;
 
     return $r;
@@ -88,6 +88,20 @@ sub last_insert_id {
     my $this = shift;
 
     return $this->firstcol("select last_insert_id()")->[0];
+}
+# }}}
+# errstr (needs to be here, called from AUTOLOAD) {{{
+sub errstr {
+    my $this = shift;
+
+    return $this->handle->errstr;
+}
+# }}}
+# trace (needs to be here, called from AUTOLOAD) {{{
+sub trace (needs to be here, doesn't return politely) {
+    my $this = shift;
+
+    $this->handle->trace( @_ );
 }
 # }}}
 
