@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.11 2002/01/18 01:45:01 jettero Exp $
+# $Id: Easy.pm,v 1.12 2002/02/25 18:58:45 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use DBI;
 
-our $VERSION = "0.99.3b";
+our $VERSION = "0.99.7b";
 
 return 1;
 
@@ -83,6 +83,19 @@ sub errstr {
     return $this->handle->errstr;
 }
 # }}}
+# last_insert_id {{{
+sub last_insert_id {
+    my $this = shift;
+
+    return $this->firstcol("select last_insert_id()")->[0];
+}
+# }}}
+
+sub DESTROY {
+    my $this = shift;
+
+    $this->{dbh}->disconnect if $this->{dbh};
+}
 
 # handle {{{
 sub handle {
@@ -96,7 +109,7 @@ sub handle {
         $this->{trace} =           0 unless $this->{trace};
 
         $this->{dbh} = DBI->connect("DBI:mysql:$this->{dbase}:$this->{host}", $this->{user}, $this->{pass});
-        $this->{dbh}->trace($this->{trace});
+        $this->{dbh}->trace($this->{trace}) if $this->{dbh};
     }
 
     return $this->{dbh};
@@ -192,6 +205,9 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
        # returns an arrayref of values for the sql.
        # You know, print "val: $_\n" for @$arr;
        # very handy...
+
+   $id = $dbo->last_insert_id;
+       # self explainatory?
 
    $dbo->trace(1); $dbo->do("sql"); $dbo->trace(0);
        # turns the DBI trace on and off.
