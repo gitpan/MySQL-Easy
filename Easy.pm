@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.18 2002/06/05 00:01:36 jettero Exp $
+# $Id: Easy.pm,v 1.20 2002/06/07 02:48:47 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use DBI;
 
-our $VERSION = "1.14";
+our $VERSION = "1.15";
 
 return 1;
 
@@ -19,7 +19,7 @@ sub new {
 
     $this = bless {}, $this;
 
-    $this->{dbase} = shift;
+    $this->{dbase} = shift; croak "dbase = '$this->{dbase}'?" unless $this->{dbase};
     $this->{trace} = shift;
 
     return $this;
@@ -109,7 +109,9 @@ sub handle {
         $this->{trace} =           0 unless $this->{trace};
 
         $this->{dbh} = DBI->connect("DBI:mysql:$this->{dbase}:$this->{host}", $this->{user}, $this->{pass});
-        $this->{dbh}->trace($this->{trace}) if $this->{dbh};
+        croak "fail'd to generate connection (db=$this->{dbase}, ho=$this->{host}, us=$this->{user})" unless $this->{dbh};
+
+        $this->{dbh}->trace($this->{trace});
     }
 
     return $this->{dbh};
@@ -141,7 +143,7 @@ sub unp {
 sub set_host { 
     my $this = shift;
 
-    $this->{host} = shift 
+    $this->{host} = shift;
 }
 
 sub set_user { 
