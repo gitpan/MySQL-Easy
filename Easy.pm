@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.3 2004/12/29 13:59:20 jettero Exp $
+# $Id: Easy.pm,v 1.5 2005/02/11 13:57:15 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -10,7 +10,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.25.1";
+our $VERSION = "1.26";
 use vars qw($AUTOLOAD);
 
 return 1;
@@ -29,6 +29,34 @@ sub AUTOLOAD {
     return $r;
 }
 # }}}
+
+sub check_warnings {
+    my $this = shift;
+    my $sth  = $this->ready("show warnings");
+
+    # mysql> show warnings;
+    # +---------+------+------------------------------------------+
+    # | Level   | Code | Message                                  |
+    # +---------+------+------------------------------------------+
+    # | Warning | 1265 | Data truncated for column 'var' at row 1 |
+    # +---------+------+------------------------------------------+
+
+    my @warnings;
+
+    execute $sth or die $this->errstr;
+    while( my $a = fetchrow_arrayref $sth ) {
+        push @warnings, $a;
+    }
+    finish $sth;
+
+    if( @warnings ) {
+        $@ = join("\n", map("$_->[0]($_->[1]): $_->[2]", @warnings)) . "\n";
+
+        return 0;
+    }
+
+    return 1;
+}
 
 # new {{{
 sub new { 
@@ -284,6 +312,13 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
        # returns an error string for the last error on the
        # thread...  Same as a $sth->errstr.  It's actually
        # described in DBI
+
+   $dbo->check_warnings
+       # I'll just give this example:
+       $dbo->do("create temporary table cool( field enum('test1', 'test2') not null )");
+       $dbo->do("insert into cool set field='test3'");
+       $dbo->check_warnings 
+           or die "SQL WARNING: $@\twhile inserting test field\n\t";
 
    $dbo->set_host($h); $dbo->set_port($p); 
    $dbo->set_user($U); $dbo->set_pass($p);

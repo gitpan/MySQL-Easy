@@ -11,3 +11,4 @@ makeitfromscratch
 Distro
 gpl.txt
 META.yml                                 Module meta-data (added by MakeMaker)
+t/15_warnings.t
