@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.28 2002/10/29 14:13:58 jettero Exp $
+# $Id: Easy.pm,v 1.29 2003/05/19 18:23:29 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -10,7 +10,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.2";
+our $VERSION = "1.21";
 use vars qw($AUTOLOAD);
 
 return 1;
@@ -29,6 +29,7 @@ sub AUTOLOAD {
     return $r;
 }
 # }}}
+
 # new {{{
 sub new { 
     my $this  = shift;
@@ -90,7 +91,8 @@ sub firstcol {
 sub last_insert_id {
     my $this = shift;
 
-    return $this->firstcol("select last_insert_id()")->[0];
+    # return $this->firstcol("select last_insert_id()")->[0];
+    return $this->handle->{mysql_insertid};
 }
 # }}}
 # errstr (needs to be here, called from AUTOLOAD) {{{

@@ -1,3 +1,6 @@
+1.21:  Mon May 19 14:23:29 EDT 2003
+   - jettero added a better last_insert function
+
 1.2:  Tue Oct 29 09:13:58 EST 2002
    - jettero added the johsr bind_execute function
 

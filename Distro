@@ -4,13 +4,14 @@
 ./distclean
 perl Makefile.PL && make dist
 
-if [ -d ~/www/PerlModules ]; then
+mkdir -p dist
+
     n=`ls My*Easy*gz`;
     date=`date`;
-    cat Easy.pm | pod2html > ~/www/PerlModules/Easy.html
-    rm -vf pod* ~/www/PerlModules/My*Easy*gz
-    mv -v My*gz ~/www/PerlModules
-cat > ~/www/PerlModules/Easy.b.html << EOF
+    cat Easy.pm | pod2html > ./dist/Easy.html
+    rm -vf pod* ./dist/My*Easy*gz
+    mv -v My*gz ./dist
+cat > ./dist/Easy.b.html << EOF
 <p>
 This (<a href="$n">$n</a>) is something I've been using over and over.  I don't
 remember how I used to live without it.  So, I give it to you.
@@ -18,5 +19,9 @@ Don't use it if you don't like it! :)
 Check out the man page: <a href="?eo_cat=Easy.html">MySQL::Easy module</a>.
 Last updated on $date
 EOF
-    chmod -v 644 ~/www/PerlModules/Easy.* ~/www/PerlModules/My*gz
-fi
+
+ssh mei.net "(cd /home/dillhome/voltar/html/PerlModules/; rm *My*Easy*)"
+scp dist/* mei.net:/home/dillhome/voltar/html/PerlModules/
+ssh mei.net "(cd /home/dillhome/voltar/html/PerlModules/; chmod 644 *.html *.gz)"
+
+rm -rvf dist
