@@ -1,16 +1,24 @@
-MySQL/easy version 0.01
+MySQL::Easy
 =======================
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+BLURB
 
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
+This module is really just a collection of handy shortcuts that
+the author uses frequently.  It probably had no business ever
+ending up on CPAN at all, but since serveral people use it
+(including but not limited to the author), he decided to
+definitely keep it on CPAN.
+
+It Automagically reads your .my.cnf (if any) and handles all the
+connections in the usual way.  There are a few other nice little
+shortcuts, but this is the gist of it.
+
+EXAMPLE
+
+my $dbo = new MySQL::Easy("databasename"); 
+my $sth = $dbo->ready("select * from some_table");
+
+execute $sth or die $dbo->errstr;
 
 INSTALLATION
 

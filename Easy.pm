@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.29 2003/05/19 18:23:29 jettero Exp $
+# $Id: Easy.pm,v 1.3 2004/12/29 13:59:20 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -10,7 +10,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.21";
+our $VERSION = "1.25.1";
 use vars qw($AUTOLOAD);
 
 return 1;
@@ -76,7 +76,7 @@ sub unlock {
 sub ready {
     my $this = shift;
 
-    return $this->handle->prepare(@_);
+    return $this->handle->prepare( @_ );
 }
 # }}}
 # firstcol {{{
@@ -85,6 +85,13 @@ sub firstcol {
     my $query = shift;
 
     return $this->handle->selectcol_arrayref($query, undef, @_);
+}
+# }}}
+# thread_id {{{
+sub thread_id {
+    my $this = shift;
+
+    return $this->handle->{mysql_thread_id};
 }
 # }}}
 # last_insert_id {{{
@@ -120,18 +127,22 @@ sub DESTROY {
 sub handle {
     my $this = shift;
 
-    if(not $this->{dbh}) {
-        ($this->{user}, $this->{pass}) = $this->unp unless $this->{user} and $this->{pass};
+    return $this->{dbh} if defined($this->{dbh}) and $this->{dbh}->ping;
 
-        $this->{host}  = "localhost" unless $this->{host};
-        $this->{dbase} =      "test" unless $this->{dbase};
-        $this->{trace} =           0 unless $this->{trace};
+    ($this->{user}, $this->{pass}) = $this->unp unless $this->{user} and $this->{pass};
 
-        $this->{dbh} = DBI->connect("DBI:mysql:$this->{dbase}:$this->{host}", $this->{user}, $this->{pass});
-        croak "fail'd to generate connection (db=$this->{dbase}, ho=$this->{host}, us=$this->{user})" unless $this->{dbh};
+    $this->{host}  = "localhost" unless $this->{host};
+    $this->{port}  =      "3306" unless $this->{port};
+    $this->{dbase} =      "test" unless $this->{dbase};
+    $this->{trace} =           0 unless $this->{trace};
 
-        $this->{dbh}->trace($this->{trace});
-    }
+    $this->{dbh} = DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}:mysql_compression=1", 
+        $this->{user}, $this->{pass});
+
+    croak "fail'd to generate connection (db=$this->{dbase}, ho=$this->{host}, us=$this->{user}): " . DBI->errstr 
+        unless $this->{dbh};
+
+    $this->{dbh}->trace($this->{trace});
 
     return $this->{dbh};
 }
@@ -164,6 +175,12 @@ sub set_host {
     $this->{host} = shift;
 }
 
+sub set_port { 
+    my $this = shift;
+
+    $this->{port} = shift;
+}
+
 sub set_user { 
     my $this = shift;
     
@@ -176,7 +193,7 @@ sub set_pass {
     $this->{pass} = shift;
 }
 # }}}
-
+# bind_execute {{{
 sub bind_execute {
     my $this = shift;
     my $sql  = shift;
@@ -188,6 +205,7 @@ sub bind_execute {
 
     return $sth;
 }
+# }}}
 
 __END__
 # Below is stub documentation for your module. You better edit it!
@@ -267,7 +285,8 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
        # thread...  Same as a $sth->errstr.  It's actually
        # described in DBI
 
-   $dbo->set_host($h); $dbo->set_user($U); $dbo->set_pass($p);
+   $dbo->set_host($h); $dbo->set_port($p); 
+   $dbo->set_user($U); $dbo->set_pass($p);
        # The first time you do a do/ready/firstcol/etc,
        # MySQL::Easy connects to the database.  You may use these
        # set functions to override values found in your ~/.my.cnf
@@ -304,6 +323,22 @@ Jettero Heller <japh@voltar-confed.org>
 =head1 THANKS
 
     For bugs and ideas: Josh Rabinowitz <joshr-cpan@joshr.com>
+
+=head1 COPYRIGHT
+
+    GPL!  I included a gpl.txt for your reading enjoyment.
+
+    Though, additionally, I will say that I'll be tickled if you were to
+    include this package in any commercial endeavor.  Also, any thoughts to
+    the effect that using this module will somehow make your commercial
+    package GPL should be washed away.
+
+    I hereby release you from any such silly conditions.
+
+    This package and any modifications you make to it must remain GPL.  Any
+    programs you (or your company) write shall remain yours (and under
+    whatever copyright you choose) even if you use this package's intended
+    and/or exported interfaces in them.
 
 =head1 SEE ALSO
 

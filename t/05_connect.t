@@ -1,5 +1,5 @@
 # vi:fdm=marker fdl=0 syntax=perl:
-# $Id: main.t,v 1.12 2002/10/29 14:13:48 jettero Exp $
+# $Id: 05_connect.t,v 1.1 2004/12/03 16:14:02 jettero Exp $
 
 use Test;
 
