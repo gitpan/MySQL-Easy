@@ -1,17 +1,32 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.20 2002/06/07 02:48:47 jettero Exp $
+# $Id: Easy.pm,v 1.21 2002/08/28 21:04:27 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
 use warnings;
 use Carp;
+use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.15";
+our $VERSION = "1.16";
+use vars qw($AUTOLOAD);
 
 return 1;
+
+sub AUTOLOAD {
+    my $this = shift;
+    my $sub  = $AUTOLOAD;
+
+    $sub = $1 if $sub =~ m/::(\w+)$/;
+
+    my $e = $SIG{__WARN__}; $SIG{__WARN__} = sub {};
+    my $r = $this->handle->$sub( @_ ) or croak $this->errstr;
+    $SIG{__WARN__} = $e;
+
+    return $r;
+}
 
 # new {{{
 sub new { 
@@ -66,21 +81,6 @@ sub firstcol {
     my $query = shift;
 
     return $this->handle->selectcol_arrayref($query, undef, @_);
-}
-# }}}
-# trace {{{
-sub trace {
-    my $this  = shift;
-
-    $this->{trace} = shift;
-    $this->handle->trace($this->{trace});
-}
-# }}}
-# errstr {{{
-sub errstr {
-    my $this = shift;
-
-    return $this->handle->errstr;
 }
 # }}}
 # last_insert_id {{{
