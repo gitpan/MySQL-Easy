@@ -1,3 +1,12 @@
+1.2:  Tue Oct 29 09:13:58 EST 2002
+   - jettero added the johsr bind_execute function
+
+1.19:  Tue Oct 29 08:08:03 EST 2002
+   - jettero fixed some docs typos and added Josh's existing handle support.
+
+1.18:  Thu Oct  3 09:40:15 EDT 2002
+   - jettero fixed a really stupid syntax bug ...
+
 1.17:  Fri Aug 30 07:01:19 EDT 2002
    - jettero fixed two very stupid bugs in the AUTOLOADer ... lost my webserver at 5am due to one of them. :(
 

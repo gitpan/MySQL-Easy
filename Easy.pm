@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.23 2002/08/30 11:01:20 jettero Exp $
+# $Id: Easy.pm,v 1.28 2002/10/29 14:13:58 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -10,11 +10,12 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.17";
+our $VERSION = "1.2";
 use vars qw($AUTOLOAD);
 
 return 1;
 
+# AUTOLOAD {{{
 sub AUTOLOAD {
     my $this = shift;
     my $sub  = $AUTOLOAD;
@@ -27,7 +28,7 @@ sub AUTOLOAD {
 
     return $r;
 }
-
+# }}}
 # new {{{
 sub new { 
     my $this  = shift;
@@ -35,12 +36,14 @@ sub new {
     $this = bless {}, $this;
 
     $this->{dbase} = shift; croak "dbase = '$this->{dbase}'?" unless $this->{dbase};
+    $this->{dbh} = $this->{dbase} if ref($this->{dbase}) eq "DBI::db";
     $this->{trace} = shift;
+
+    $this->{dbh}->trace( $this->{trace} ) if $this->{dbh};
 
     return $this;
 }
 # }}}
-
 # do {{{
 sub do {
     my $this = shift; return unless @_;
@@ -98,19 +101,19 @@ sub errstr {
 }
 # }}}
 # trace (needs to be here, called from AUTOLOAD) {{{
-sub trace (needs to be here, doesn't return politely) {
+sub trace {
     my $this = shift;
 
     $this->handle->trace( @_ );
 }
 # }}}
-
+# DESTROY {{{
 sub DESTROY {
     my $this = shift;
 
     $this->{dbh}->disconnect if $this->{dbh};
 }
-
+# }}}
 # handle {{{
 sub handle {
     my $this = shift;
@@ -152,7 +155,6 @@ sub unp {
     return ($user, $pass);
 }
 # }}}
-
 # set_host set_user set_pass {{{
 sub set_host { 
     my $this = shift;
@@ -173,6 +175,18 @@ sub set_pass {
 }
 # }}}
 
+sub bind_execute {
+    my $this = shift;
+    my $sql  = shift;
+
+    my $sth = $this->ready($sql);
+
+    $sth->execute            or return undef;
+    $sth->bind_columns( @_ ) or return undef;
+
+    return $sth;
+}
+
 __END__
 # Below is stub documentation for your module. You better edit it!
 
@@ -184,18 +198,22 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
 
   use MySQL::Easy;
 
-  my $dbo = new MySQL::Easy("stocks");
+  my $trace = 0; # the trace arg is optional
+  my $dbo = new MySQL::Easy("stocks", $trace);
+
+  #  This is NEW (and totally untested):
+  #  $dbo = new MySQL::Easy($existing_DBI_dbh, $trace);
 
   my $symbols = $dbo->firstcol(
       qq( select symbol from ohlcv where symbol != ?),
       "msft"
   );
 
-  for(@$symbols) {
+  for my $s (@$symbols) {
       my $q = $dbo->ready("select * from ohlcv where symbol=?");
       my @a;
 
-      execute $q;
+      $q->execute($s)
       print "@a" while @a = fetchrow_array $q;
   }
 
@@ -257,6 +275,19 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
        # a fatal error if the user or pass is false and the
        # ~/.my.cnf cannot be opened.
 
+   my $table;
+   my $sth = $dbo->bind_execute("show tables", \( $table ) );
+       # This was Josh's idea... And a good one.
+
+   die $dbo->errstr unless $sth;  
+       # bind_execute returns undef if either the bind
+       # or execute phases fail.
+
+   print "$table\n" while fetch $sth;
+
+   # Anything from the DBI.pm manpage will work with the
+   # $dbo (thanks to an AUTOLOAD function).
+
 =head1 AUTHOR
 
 Jettero Heller <japh@voltar-confed.org>
@@ -267,6 +298,10 @@ Jettero Heller <japh@voltar-confed.org>
    Actually, let him know if you find it handy at all.
    Half the fun of releasing this stuff is knowing 
    that people use it.
+
+=head1 THANKS
+
+    For bugs and ideas: Josh Rabinowitz <joshr-cpan@joshr.com>
 
 =head1 SEE ALSO
 
