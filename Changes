@@ -1,6 +1,9 @@
-Revision history for Perl extension MySQL::Easy.
+1.14:  Tue Jun  4 20:01:36 EDT 2002
+   - jettero fixed the test.t
 
-0.01  Thu Jan 17 11:02:42 2002
-	- original version; created by h2xs 1.21 with options
-		-X MySQL::easy
+1.13:  Tue Jun  4 19:59:07 EDT 2002
+   - jettero made some distribution cleanups
+
+1.12:  Tue Jun  4 19:57:17 EDT 2002
+   - jettero made a couple changes ...
 

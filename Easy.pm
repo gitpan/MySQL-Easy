@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.13 2002/02/26 15:16:13 jettero Exp $
+# $Id: Easy.pm,v 1.18 2002/06/05 00:01:36 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use DBI;
 
-our $VERSION = "1.0b";
+our $VERSION = "1.14";
 
 return 1;
 
@@ -138,9 +138,23 @@ sub unp {
 # }}}
 
 # set_host set_user set_pass {{{
-sub set_host { (shift)->{host} = shift }
-sub set_user { (shift)->{user} = shift }
-sub set_pass { (shift)->{pass} = shift }
+sub set_host { 
+    my $this = shift;
+
+    $this->{host} = shift 
+}
+
+sub set_user { 
+    my $this = shift;
+    
+    $this->{user} = shift;
+}
+
+sub set_pass { 
+    my $this = shift;
+    
+    $this->{pass} = shift;
+}
 # }}}
 
 __END__
