@@ -1,6 +1,6 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.12 2002/02/25 18:58:45 jettero Exp $
+# $Id: Easy.pm,v 1.13 2002/02/26 15:16:13 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
@@ -9,7 +9,7 @@ use Carp;
 
 use DBI;
 
-our $VERSION = "0.99.7b";
+our $VERSION = "1.0b";
 
 return 1;
 
