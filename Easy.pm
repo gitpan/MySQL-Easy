@@ -1,14 +1,15 @@
 package MySQL::Easy;
 
-# $Id: Easy.pm,v 1.8 2002/01/17 17:55:22 jettero Exp $
+# $Id: Easy.pm,v 1.11 2002/01/18 01:45:01 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 use strict;
 use warnings;
+use Carp;
 
 use DBI;
 
-our $VERSION = "0.99b";
+our $VERSION = "0.99.3b";
 
 return 1;
 
@@ -29,7 +30,12 @@ sub new {
 sub do {
     my $this = shift; return unless @_;
 
-    $this->ready(shift)->execute(@_);
+    my $e = $SIG{__WARN__}; $SIG{__WARN__} = sub {};
+    my $r = $this->ready(shift)->execute(@_) or croak $this->errstr;
+
+    $SIG{__WARN__} = $e;
+
+    return $r;
 }
 # }}}
 # lock {{{
@@ -104,9 +110,10 @@ sub unp {
 
     open PASS, "$ENV{HOME}/.my.cnf" or die "$!";
 
-    while(<PASS>) {
-        $user = $1 if /user\s*=\s*(.+)/;
-        $pass = $1 if /password\s*=\s*(.+)/;
+    my $l;
+    while($l = <PASS>) {
+        $user = $1 if $l =~ m/user\s*=\s*(.+)/;
+        $pass = $1 if $l =~ m/password\s*=\s*(.+)/;
 
         last if($user and $pass);
     }
