@@ -1,3 +1,6 @@
+1.27:  Wed May 25 15:17:48 EDT 2005
+   - jettero made the :sth returned by ready() a special MySQL::Easy version that auto-reloads itself in the case of the DBI connection fading and re-connecting. This way you don't have to re-prepare the same statements over and over -- by hand anyway.
+
 1.26:  Fri Feb 11 07:25:31 EST 2005
    - jettero added a check_warnings function
 

@@ -1,7 +1,77 @@
-package MySQL::Easy;
-
-# $Id: Easy.pm,v 1.5 2005/02/11 13:57:15 jettero Exp $
+# $Id: Easy.pm,v 1.9 2005/05/25 19:17:49 jettero Exp $
 # vi:fdm=marker fdl=0:
+
+package MySQL::Easy::sth;
+
+use strict;
+use warnings;
+use Carp;
+use AutoLoader;
+
+our $AUTOLOAD;
+
+# new {{{
+sub new {
+    my ($class, $mysql_e, $statement) = @_;
+    my $this  = bless { s=>$statement, dbo=>$mysql_e }, $class;
+
+    $this->{sth} = $this->{dbo}->handle->prepare( $statement );
+
+    return $this;
+}
+# }}}
+# AUTOLOAD {{{
+sub AUTOLOAD {
+    my $this = shift;
+    my $sub  = $AUTOLOAD;
+
+    $sub = $1 if $sub =~ m/::(\w+)$/;
+
+    my $tries = 2;
+    if( $this->{sth}->can($sub) ) {
+        my $ret;
+        my $warn;
+
+        EVAL_IT: eval q/ 
+            no strict 'refs';
+            local $SIG{__WARN__} = sub { $warn = "@_"; };
+            $ret = $this->{sth}->$sub( @_ );
+        /;
+        $@ = $warn if $warn and not $@;
+
+        if( $@ ) {
+            if( $@ =~ m/MySQL server has gone away/ ) {
+                $this->{sth} = $this->{dbo}->handle->prepare( $this->{s} );
+                $warn = undef;
+
+                goto EVAL_IT if ((--$tries) > 0);
+            }
+
+            croak $@;
+
+        } else {
+            return $ret;
+        }
+
+    } else {
+        croak "$sub is not a member of " . ref($this->{sth});
+    }
+}
+# }}}
+# DESTROY {{{
+sub DESTROY {
+    my $this = shift;
+
+    # warn "MySQL::Easy::sth is dying"; # This is here to make sure we don't normally die during global destruction.
+                                        # Once it appeared to function correctly, it was removed.
+                                        # Lastly, we would die during global dest iff: our circular ref from new() were not removed.
+                                        # Although, to be truely circular, the MySQL::Easy would need to point to this ::sth also
+                                        # and it probably doesn't.  So, is this delete paranoid?  Yeah...  meh.
+    delete $this->{dbo};
+}
+# }}}
+
+package MySQL::Easy;
 
 use strict;
 use warnings;
@@ -10,10 +80,10 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.26";
-use vars qw($AUTOLOAD);
+our $VERSION = "1.27";
+our $AUTOLOAD;
 
-return 1;
+1;
 
 # AUTOLOAD {{{
 sub AUTOLOAD {
@@ -22,14 +92,19 @@ sub AUTOLOAD {
 
     $sub = $1 if $sub =~ m/::(\w+)$/;
 
-    my $e = $SIG{__WARN__}; $SIG{__WARN__} = sub {};
-    my $r = $this->handle->$sub( @_ ) or croak "MySQL::Easy AUTOLOAD of $sub failed: " . $this->errstr;
-    $SIG{__WARN__} = $e;
+    my $handle = $this->handle;
 
-    return $r;
+    if( $handle->can($sub) ) {
+        no strict 'refs';
+        return $handle->$sub( @_ );
+
+    } else {
+        croak "$sub is not a member of " . ref($handle);
+    }
 }
 # }}}
 
+# check_warnings {{{
 sub check_warnings {
     my $this = shift;
     my $sth  = $this->ready("show warnings");
@@ -57,7 +132,7 @@ sub check_warnings {
 
     return 1;
 }
-
+# }}}
 # new {{{
 sub new { 
     my $this  = shift;
@@ -104,7 +179,7 @@ sub unlock {
 sub ready {
     my $this = shift;
 
-    return $this->handle->prepare( @_ );
+    return new MySQL::Easy::sth( $this, @_ );
 }
 # }}}
 # firstcol {{{
@@ -156,6 +231,7 @@ sub handle {
     my $this = shift;
 
     return $this->{dbh} if defined($this->{dbh}) and $this->{dbh}->ping;
+    # warn "WARNING: MySQL::Easy is trying to reconnect (if possible)" if defined $this->{dbh};
 
     ($this->{user}, $this->{pass}) = $this->unp unless $this->{user} and $this->{pass};
 
@@ -164,7 +240,8 @@ sub handle {
     $this->{dbase} =      "test" unless $this->{dbase};
     $this->{trace} =           0 unless $this->{trace};
 
-    $this->{dbh} = DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}:mysql_compression=1", 
+    $this->{dbh} =
+    DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}:mysql_compression=1;mysql_auto_reconnect=1", 
         $this->{user}, $this->{pass});
 
     croak "fail'd to generate connection (db=$this->{dbase}, ho=$this->{host}, us=$this->{user}): " . DBI->errstr 
@@ -348,32 +425,32 @@ MySQL::Easy - Perl extension to make your base code kinda pretty.
 
 Jettero Heller <japh@voltar-confed.org>
 
-   Jet is using this software in his own projects...
-   If you find bugs, please please please let him know. :)
+Jet is using this software in his own projects...
+If you find bugs, please please please let him know. :)
 
-   Actually, let him know if you find it handy at all.
-   Half the fun of releasing this stuff is knowing 
-   that people use it.
+Actually, let him know if you find it handy at all.
+Half the fun of releasing this stuff is knowing 
+that people use it.
 
 =head1 THANKS
 
-    For bugs and ideas: Josh Rabinowitz <joshr-cpan@joshr.com>
+For bugs and ideas: Josh Rabinowitz <joshr-cpan@joshr.com>
 
 =head1 COPYRIGHT
 
-    GPL!  I included a gpl.txt for your reading enjoyment.
+GPL!  I included a gpl.txt for your reading enjoyment.
 
-    Though, additionally, I will say that I'll be tickled if you were to
-    include this package in any commercial endeavor.  Also, any thoughts to
-    the effect that using this module will somehow make your commercial
-    package GPL should be washed away.
+Though, additionally, I will say that I'll be tickled if you were to
+include this package in any commercial endeavor.  Also, any thoughts to
+the effect that using this module will somehow make your commercial
+package GPL should be washed away.
 
-    I hereby release you from any such silly conditions.
+I hereby release you from any such silly conditions.
 
-    This package and any modifications you make to it must remain GPL.  Any
-    programs you (or your company) write shall remain yours (and under
-    whatever copyright you choose) even if you use this package's intended
-    and/or exported interfaces in them.
+This package and any modifications you make to it must remain GPL.  Any
+programs you (or your company) write shall remain yours (and under
+whatever copyright you choose) even if you use this package's intended
+and/or exported interfaces in them.
 
 =head1 SEE ALSO
 

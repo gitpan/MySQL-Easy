@@ -1,15 +1,21 @@
 # vi:fdm=marker fdl=0 syntax=perl:
-# $Id: 10_connection_loss.t,v 1.1 2004/12/03 16:14:02 jettero Exp $
+# $Id: 10_connection_loss.t,v 1.2 2005/05/25 15:09:51 jettero Exp $
 
 if( -d "/home/jettero/code/perl/easy" ) {
     use strict;
     use Test;
     use MySQL::Easy;
 
-    plan tests => 3;
+    plan tests => 5;
 
-    my $dbo1 = new MySQL::Easy("scratch");
+    my $dbo1 = new MySQL::Easy("scratch"); my $dies = $dbo1->ready("select count(*) from aga");
     my $dbo2 = new MySQL::Easy("scratch");
+
+    execute $dies or die $dbo1->errstr;
+    if( my ($c) = fetchrow_array $dies ) {
+        ok( $c > 0 );
+    }
+    finish $dies;
 
     my $thread  = $dbo1->thread_id;
     my $threads = $dbo2->firstcol("show processlist");
@@ -29,6 +35,13 @@ if( -d "/home/jettero/code/perl/easy" ) {
 
     # $dbo1 should be running again!
     ok( &is_in($thread, @$threads) );
+
+    # but more importantly, ... 
+    execute $dies or die $dbo1->errstr;
+    if( my ($c) = fetchrow_array $dies ) {
+        ok( $c > 0 );
+    }
+    finish $dies;
 }
 
 
