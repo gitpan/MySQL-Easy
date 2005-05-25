@@ -1,9 +1,10 @@
 # vi:fdm=marker fdl=0 syntax=perl:
-# $Id: 15_warnings.t,v 1.1 2005/02/11 13:57:15 jettero Exp $
+# $Id: 15_warnings.t,v 1.2 2005/05/25 19:41:17 jettero Exp $
+
+use Test;
 
 if( -d "/home/jettero/code/perl/easy" ) {
     use strict;
-    use Test;
     use MySQL::Easy;
 
     plan tests => 2;
@@ -21,4 +22,8 @@ if( -d "/home/jettero/code/perl/easy" ) {
 
     execute $oki or die $dbo->errstr;
     ok( check_warnings $dbo );
+
+} else {
+    plan tests => 1;
+    ok(1);
 }

@@ -1,4 +1,4 @@
-# $Id: Easy.pm,v 1.9 2005/05/25 19:17:49 jettero Exp $
+# $Id: Easy.pm,v 1.10 2005/05/25 19:41:17 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 package MySQL::Easy::sth;
@@ -80,7 +80,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.27";
+our $VERSION = "1.28";
 our $AUTOLOAD;
 
 1;

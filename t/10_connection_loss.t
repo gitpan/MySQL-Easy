@@ -1,9 +1,10 @@
 # vi:fdm=marker fdl=0 syntax=perl:
-# $Id: 10_connection_loss.t,v 1.2 2005/05/25 15:09:51 jettero Exp $
+# $Id: 10_connection_loss.t,v 1.3 2005/05/25 19:41:17 jettero Exp $
+
+use Test;
 
 if( -d "/home/jettero/code/perl/easy" ) {
     use strict;
-    use Test;
     use MySQL::Easy;
 
     plan tests => 5;
@@ -42,8 +43,11 @@ if( -d "/home/jettero/code/perl/easy" ) {
         ok( $c > 0 );
     }
     finish $dies;
-}
 
+} else {
+    plan tests => 1;
+    ok(1);
+}
 
 sub is_in {
     my ($val, @a) = @_;
