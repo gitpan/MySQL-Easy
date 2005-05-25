@@ -1,3 +1,9 @@
+1.30:  Wed May 25 17:12:15 EDT 2005
+   - jettero created a comprehensive test to cover the new stupid bugs...
+
+1.29:  Wed May 25 16:52:56 EDT 2005
+   - jettero fixed an AUTOLOAD bug in the new ::sth module. Dumb.
+
 1.28:  Wed May 25 15:41:17 EDT 2005
    - jettero fixed a couple STUPID bugs in the tests.
 

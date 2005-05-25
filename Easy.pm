@@ -1,4 +1,4 @@
-# $Id: Easy.pm,v 1.10 2005/05/25 19:41:17 jettero Exp $
+# $Id: Easy.pm,v 1.16 2005/05/25 21:12:16 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 package MySQL::Easy::sth;
@@ -24,34 +24,52 @@ sub new {
 sub AUTOLOAD {
     my $this = shift;
     my $sub  = $AUTOLOAD;
+    my $wa   = wantarray;
 
     $sub = $1 if $sub =~ m/::(\w+)$/;
 
     my $tries = 2;
     if( $this->{sth}->can($sub) ) {
+        my @ret;
         my $ret;
         my $warn;
+
+        # warn "DEBUG: FYI, $$-$this is loading $sub()";
 
         EVAL_IT: eval q/ 
             no strict 'refs';
             local $SIG{__WARN__} = sub { $warn = "@_"; };
-            $ret = $this->{sth}->$sub( @_ );
+
+            if( $wa ) {
+                @ret = $this->{sth}->$sub( @_ );
+
+            } else {
+                $ret = $this->{sth}->$sub( @_ );
+            }
         /;
-        $@ = $warn if $warn and not $@;
+         
+        if( $warn and not $@ ) {
+            $@ = $warn;
+            chomp $@;
+        }
 
         if( $@ ) {
             if( $@ =~ m/MySQL server has gone away/ ) {
-                $this->{sth} = $this->{dbo}->handle->prepare( $this->{s} );
-                $warn = undef;
+                if( $sub eq "execute" ) {
+                    $this->{sth} = $this->{dbo}->handle->prepare( $this->{s} );
+                    $warn = undef;
 
-                goto EVAL_IT if ((--$tries) > 0);
+                    goto EVAL_IT if ((--$tries) > 0);
+
+                } else {
+                    croak "MySQL::Easy::sth can only recover during execute(), $@";
+                }
             }
 
-            croak $@;
-
-        } else {
-            return $ret;
+            croak "ERROR executing $sub(): $@";
         }
+
+        return ($wa ? @ret : $ret);
 
     } else {
         croak "$sub is not a member of " . ref($this->{sth});
@@ -80,7 +98,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.28";
+our $VERSION = "1.30";
 our $AUTOLOAD;
 
 1;
