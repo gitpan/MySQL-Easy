@@ -1,4 +1,4 @@
-# $Id: Easy.pm,v 1.16 2005/05/25 21:12:16 jettero Exp $
+# $Id: Easy.pm,v 1.21 2005/07/13 18:11:35 jettero Exp $
 # vi:fdm=marker fdl=0:
 
 package MySQL::Easy::sth;
@@ -98,7 +98,7 @@ use AutoLoader;
 
 use DBI;
 
-our $VERSION = "1.30";
+our $VERSION = "1.32";
 our $AUTOLOAD;
 
 1;
@@ -114,7 +114,10 @@ sub AUTOLOAD {
 
     if( $handle->can($sub) ) {
         no strict 'refs';
-        return $handle->$sub( @_ );
+        return $handle->$sub( 
+            (ref($_[0]) eq "MySQL::Easy::sth" ? $_[0]->{sth} : $_[0]), # cheap and not "gone away" recoverable
+            @_[1 .. $#_],
+        );
 
     } else {
         croak "$sub is not a member of " . ref($handle);
