@@ -1,3 +1,8 @@
+1.33:  Thu Jul 14 08:26:49 EDT 2005
+   - jettero fixed the MANIFEST to include the new tests
+     (not that they run at all without being on my devel
+     machine).
+
 1.32:  Wed Jul 13 14:11:35 EDT 2005
    - jettero added a test for the selectall_arrayref() ::sth
      problem

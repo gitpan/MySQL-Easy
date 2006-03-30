@@ -1,12 +1,13 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         MySQL-Easy
-version:      1.32
+version:      1.34
 version_from: Easy.pm
 installdirs:  site
 requires:
     DBD::mysql:                    0
     DBI:                           0
+    DBIx::Easy:                    0
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

@@ -13,6 +13,9 @@ It Automagically reads your .my.cnf (if any) and handles all the
 connections in the usual way.  There are a few other nice little
 shortcuts, but this is the gist of it.
 
+This namespace has been discontinued.  It is now available under 
+DBIx::Easy::MySQL instead.
+
 EXAMPLE
 
 my $dbo = new MySQL::Easy("databasename"); 

@@ -4,11 +4,9 @@ MANIFEST
 MANIFEST.SKIP
 Makefile.PL
 README
-t/05_connect.t
-t/10_connection_loss.t
 distclean
 makeitfromscratch
 Distro
 gpl.txt
 META.yml                                 Module meta-data (added by MakeMaker)
-t/15_warnings.t
+t/01_load.t
