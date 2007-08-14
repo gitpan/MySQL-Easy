@@ -1,4 +1,4 @@
 #!/bin/sh
-# $Id: distclean,v 1.1 2004/12/03 16:14:02 jettero Exp $
+# $Id: distclean,v 1.1 2006/03/17 18:48:13 jettero Exp $
 
 [ -f Makefile ] && make distclean

@@ -1,3 +1,20 @@
+2.0.0: May 29th 2007
+   - I have re moved this package back into the MySQL::Easy namespace.
+     It's a terrible name, but the whole package is very mysql specific and the
+     DBIx::Easy::MySQL namespace did not work out well at all.
+
+   - I also stripped out the sqlite portions.  There was nothing to make easy about using it.
+
+1.42:  Tue Feb 20 11:29:41 EST 2007
+   - jettero made this still test ok even if you don't have
+     DBD::SQLite
+
+1.41:  Fri May 19 21:27:43 EDT 2006
+   - jettero added light_lock
+
+1.40:  Thu Mar 30 07:25:45 EST 2006
+   - jettero added sqlite
+
 1.33:  Thu Jul 14 08:26:49 EDT 2005
    - jettero fixed the MANIFEST to include the new tests
      (not that they run at all without being on my devel

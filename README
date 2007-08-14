@@ -1,39 +1,27 @@
-MySQL::Easy
-=======================
 
-BLURB
+Just what is this and why did you write it?
 
-This module is really just a collection of handy shortcuts that
-the author uses frequently.  It probably had no business ever
-ending up on CPAN at all, but since serveral people use it
-(including but not limited to the author), he decided to
-definitely keep it on CPAN.
+Well, I wrote MySQL::Easy (bad name, I know) because I didn't like all the
+work I had to do maintaining and working with the DBI methods to keep my
+mysql connection alive.  I found I had to do the same simple lines of code
+over and over and I didn't like it.  That is all.
 
-It Automagically reads your .my.cnf (if any) and handles all the
-connections in the usual way.  There are a few other nice little
-shortcuts, but this is the gist of it.
+Examples:
 
-This namespace has been discontinued.  It is now available under 
-DBIx::Easy::MySQL instead.
+my $dbh = DBI->connect("DBI::mysql:testdb:host=something:port=something;opt;opt;opt");
+my $dbo = new MySQL::Easy("testdb");
 
-EXAMPLE
+Easy reads your $ENV{HOME}/.my.cnf for unp when you don't specify the
+username/pass directly.  Handy?!?!  Yes.
 
-my $dbo = new MySQL::Easy("databasename"); 
-my $sth = $dbo->ready("select * from some_table");
+my $sth1 = $dbh->prepare("select something from something where something=something");
+my $sth2 = $dbo->ready("select something from something where something=something");
 
-execute $sth or die $dbo->errstr;
+$sth1 looks pretty much the same as $sth2... but $sth2 will check to see if
+the connection is still there and if it isn't, will rebuild the connection
+and re-prepare the sth automatically -- ie, no errors.
 
-INSTALLATION
+Other than these two little things, this package is probably not necessary and
+sticking with vanilla DBI is probably the way to go.
 
-To install this module type the following:
-
-   perl Makefile.PL
-   make
-   make test
-   make install
-
-DEPENDENCIES
-
-COPYRIGHT AND LICENCE
-
-It's GPL.  Play nice.
+- Paul

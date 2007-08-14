@@ -1,28 +1,31 @@
 #!/bin/sh
-# $Id: Distro,v 1.3 2006/03/30 12:12:33 jettero Exp $
+# $Id: Distro,v 1.6 2007/05/29 18:11:16 jettero Exp $
 
 ./distclean
 perl Makefile.PL && make dist
 
 mkdir -p dist
 
-    n=`ls My*Easy*gz`;
-    date=`date`;
-    cat Easy.pm | pod2html > ./dist/Easy.html
-    rm -vf pod* ./dist/My*Easy*gz
-    mv -v My*gz ./dist
-cat > ./dist/Easy.b.html << EOF
+n=`ls *Easy*gz`;
+date=`date`;
+cat Easy.pm  | pod2html > ./dist/DEMySQL.html
+rm -vf pod* ./dist/DBI*Easy*gz
+mv -v MySQL*Easy*gz ./dist
+
+cat > ./dist/DEMySQL.b.html << EOF
 <p>
 This (<a href="$n">$n</a>) is something I've been using over and over.  I don't
-remember how I used to live without it.  So, I give it to you.
-Don't use it if you don't like it! :)  This namespace has been discontinued.  It
-is still available under the name DBIx::Easy::MySQL.
-Check out the man page: <a href="?eo_cat=Easy.html">MySQL::Easy module</a>.
+remember how I used to live without it.  I had quit publishing this on CPAN for
+a while, but I decided to put it back after soneome asked about it.  I have
+gotten grief about the namespace previously, but moving it into DBIx didn't
+work out.
+Check out the man page: <a href="?eo_cat=DEMySQL.html">MySQL::Easy module</a>.
 Last updated on $date
 EOF
 
-ssh mei.net "(cd /home/dillhome/voltar/html/PerlModules/; rm *My*Easy*)"
-scp dist/* mei.net:/home/dillhome/voltar/html/PerlModules/
-ssh mei.net "(cd /home/dillhome/voltar/html/PerlModules/; chmod 644 *.html *.gz)"
+ssh mei.net "(cd /home/voltar/html/PerlModules/; rm -f MySQL*Easy* *DBI*Easy*)"
+scp dist/* mei.net:/home/voltar/html/PerlModules/
+ssh mei.net "(cd /home/voltar/html/PerlModules/; chmod 644 *.html *.gz)"
 
+cp -va dist/MySQL*.gz /usr/local/portage/dev-perl/jets-favorites/files/MySQL-Easy.tar.gz
 rm -rvf dist

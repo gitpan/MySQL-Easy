@@ -1,5 +1,10 @@
+format.scr
+distclean
+installhere
+makeitfromscratch
+.cvsignore
 CVS
 I
-.cvsignore
-installhere
-format.scr
+testdb
+.git
+ci

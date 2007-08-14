@@ -1,7 +1,6 @@
 #!/bin/sh
-# $Id: makeitfromscratch,v 1.1 2004/12/03 16:14:02 jettero Exp $
+# $Id: makeitfromscratch,v 1.2 2006/03/29 15:04:47 jettero Exp $
 
 ./distclean
 perl Makefile.PL
 make
-
