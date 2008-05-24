@@ -20,8 +20,12 @@ a while, but I decided to put it back after soneome asked about it.  I have
 gotten grief about the namespace previously, but moving it into DBIx didn't
 work out.
 Check out the man page: <a href="?eo_cat=DEMySQL.html">MySQL::Easy module</a>.
-Last updated on $date
+<br><br>Changes:
 EOF
+
+echo -n '<pre>' >> ./dist/DEMySQL.b.html
+perl -pe '$x++ if m/^\s*$/; exit if $x>2' Changes >> ./dist/DEMySQL.b.html
+echo '</pre>' >> ./dist/DEMySQL.b.html
 
 ssh mei.net "(cd /home/voltar/html/PerlModules/; rm -f MySQL*Easy* *DBI*Easy*)"
 scp dist/* mei.net:/home/voltar/html/PerlModules/
