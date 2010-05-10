@@ -2,8 +2,7 @@
 package MySQL::Easy::sth;
 
 use Carp;
-use strict;
-use warnings;
+use common::sense;
 
 our $AUTOLOAD;
 
@@ -17,13 +16,23 @@ sub new {
     return $this;
 }
 # }}}
+# bind_execute {{{
+sub bind_execute {
+    my $this = shift;
+
+    $this->{sth}->execute;
+    $this->{sth}->bind_columns( @_ );
+
+    return $this;
+}
+# }}}
 # AUTOLOAD {{{
 sub AUTOLOAD {
     my $this = shift;
     my $sub  = $AUTOLOAD;
     my $wa   = wantarray;
 
-    return undef unless $this->{sth};
+    return unless $this->{sth};
     # croak "this sth is defunct.  please don't call things on it." unless $this->{sth};
 
     $sub = $1 if $sub =~ m/::(\w+)$/;
@@ -36,7 +45,7 @@ sub AUTOLOAD {
 
         # warn "DEBUG: FYI, $$-$this is loading $sub()";
 
-        EVAL_IT: eval q {
+        EVAL_IT: eval {
             no strict 'refs';
             local $SIG{__WARN__} = sub { $warn = "@_"; };
 
@@ -92,13 +101,12 @@ sub DESTROY {
 package MySQL::Easy;
 
 use Carp;
-use strict;
-use warnings;
+use common::sense;
 
 use DBI;
 
 our $AUTOLOAD;
-our $VERSION = "2.1002";
+our $VERSION = "2.1005";
 
 # AUTOLOAD {{{
 sub AUTOLOAD {
@@ -153,15 +161,34 @@ sub check_warnings {
 # }}}
 # new {{{
 sub new {
-    my $this  = shift;
+    my $this = shift;
 
     $this = bless {}, $this;
 
     $this->{dbase} = shift; croak "dbase = '$this->{dbase}'?" unless $this->{dbase};
     $this->{dbh} = $this->{dbase} if ref($this->{dbase}) eq "DBI::db";
-    $this->{trace} = shift;
 
-    $this->{dbh}->trace( $this->{trace} ) if $this->{dbh};
+    if( $this->{dbh} ) {
+        my $args = shift;
+        if( ref $args ) {
+            for my $k (keys %$args) {
+                my $f;
+
+                if( $this->can($f = "set_$k") ) {
+                    $this->$f($args->{$k});
+
+                } elsif( $k eq "trace" ) {
+                    $this->trace($args->{trace});
+
+                } else {
+                    croak "unrecognized attribute: $k"
+                }
+            }
+
+        } else {
+            $this->trace($args);
+        }
+    }
 
     return $this;
 }
@@ -210,6 +237,15 @@ sub firstcol {
     my $query = shift;
 
     return $this->handle->selectcol_arrayref($query, undef, @_);
+}
+# }}}
+# firstval {{{
+sub firstval {
+    my $this = shift;
+    my $query = shift;
+    my $ar = $this->handle->selectcol_arrayref($query, undef, @_);
+    return undef unless ref $ar;
+    return $ar->[0];
 }
 # }}}
 # thread_id {{{
@@ -263,9 +299,25 @@ sub handle {
     $this->{dbase} =      "test" unless $this->{dbase};
     $this->{trace} =           0 unless $this->{trace};
 
+    $this->{dbh}->disconnect if $this->{dbh}; # curiously, sometimes we do have a handle, but the ping doesn't work
+                                              # if we replace the handle, DBI complains about not disconnecting.
+                                              # Heh.  It's gone dude, let it go.
+
     $this->{dbh} =
-    DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}:mysql_compression=1;mysql_auto_reconnect=1",
-        $this->{user}, $this->{pass}, { RaiseError => 1, AutoCommit => 0 });
+    DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}",
+        $this->{user}, $this->{pass}, {
+
+            RaiseError => ($this->{raise} ? 1:0),
+            PrintError => ($this->{raise} ? 0:1),
+
+            AutoCommit => 0,
+
+            mysql_enable_utf8    => 1,
+            mysql_compression    => 1,
+            mysql_ssl            => 1,
+            mysql_auto_reconnect => 1,
+
+        });
 
     croak "failed to generate connection: " . DBI->errstr unless $this->{dbh};
 
@@ -320,6 +372,12 @@ sub set_pass {
 
     $this->{pass} = shift;
 }
+
+sub set_raise {
+    my $this = shift;
+
+    $this->{raise} = shift;
+}
 # }}}
 # bind_execute {{{
 sub bind_execute {
@@ -328,11 +386,11 @@ sub bind_execute {
 
     my $sth = $this->ready($sql);
 
-    $sth->execute            or return undef;
-    $sth->bind_columns( @_ ) or return undef;
+    $sth->execute            or return;
+    $sth->bind_columns( @_ ) or return;
 
     return $sth;
 }
 # }}}
 
-"true";
+1;

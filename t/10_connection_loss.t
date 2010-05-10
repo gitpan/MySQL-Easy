@@ -3,7 +3,7 @@ use strict;
 use Test;
 use Cwd;
 
-if( getcwd() eq "/home/jettero/code/perl/easy" ) {
+if( getcwd() eq "/home/jettero/code/cpan/easy" ) {
     use strict;
     use MySQL::Easy;
 
@@ -22,20 +22,20 @@ if( getcwd() eq "/home/jettero/code/perl/easy" ) {
     my $threads = $dbo2->firstcol("show processlist");
 
     # dbo1 should be running here...
-    ok( &is_in($thread, @$threads) );
+    ok( is_in($thread, @$threads) );
 
     $dbo2->do("kill $thread");
     $threads = $dbo2->firstcol("show processlist");
 
     # dbo1 should NOT be running here
-    ok( not &is_in($thread, @$threads) );
+    ok( not is_in($thread, @$threads) );
 
     my $sth  = $dbo1->ready("show tables");  execute $sth;  finish $sth;
     $thread  = $dbo1->thread_id;
     $threads = $dbo2->firstcol("show processlist");
 
     # $dbo1 should be running again!
-    ok( &is_in($thread, @$threads) );
+    ok( is_in($thread, @$threads) );
 
     # but more importantly, ... 
     execute $dies or die $dbo1->errstr;
