@@ -30,7 +30,6 @@ sub bind_execute {
 sub AUTOLOAD {
     my $this = shift;
     my $sub  = $AUTOLOAD;
-    my $wa   = wantarray;
 
     return unless $this->{sth};
     # croak "this sth is defunct.  please don't call things on it." unless $this->{sth};
@@ -39,9 +38,8 @@ sub AUTOLOAD {
 
     my $tries = 2;
     if( $this->{sth}->can($sub) ) {
-        my @ret;
-        my $ret;
-        my $warn;
+        my $wa = wantarray;
+        my ($err, $warn, $ret, @ret);
 
         # warn "DEBUG: FYI, $$-$this is loading $sub()";
 
@@ -57,13 +55,24 @@ sub AUTOLOAD {
             }
         };
 
-        if( $warn and not $@ ) {
-            $@ = $warn;
-            chomp $@;
+        $err = $@;
+
+        if( $warn and not $err ) {
+            $err = $warn;
+            chomp $err;
         }
 
-        if( $@ ) {
-            if( $@ =~ m/MySQL server has gone away/ ) {
+        if( $err ) {
+          # my @c = caller;
+          # my $p = "at $c[1] line $c[2], prepared at $this->{_ready_caller}[1] line $this->{_ready_caller}[2]\n";
+            my $p = "(prepared at $this->{_ready_caller}[1] line $this->{_ready_caller}[2])";
+
+            1 while $err =~ s/\s+at(?:\s+\S+)?\s+line\s+\d+\.?$//;
+
+            # ERROR executing execute(): DBD::mysql::st execute failed: You have an error in your SQL syntax; check the manual
+            $err =~ s/DBD::mysql::sth? execute failed:\s*//;
+
+            if( $err =~ m/MySQL server has gone away/ ) {
                 if( $sub eq "execute" ) {
                     $this->{sth} = $this->{dbo}->handle->prepare( $this->{s} );
                     $warn = undef;
@@ -71,11 +80,11 @@ sub AUTOLOAD {
                     goto EVAL_IT if ((--$tries) > 0);
 
                 } else {
-                    croak "MySQL::Easy::sth can only recover during execute(), $@";
+                    croak "MySQL::Easy::sth can only recover from connection problems during execute(): $err $p";
                 }
             }
 
-            croak "ERROR executing $sub(): $@";
+            croak "ERROR executing $sub(): $err $p";
         }
 
         return ($wa ? @ret : $ret);
@@ -106,7 +115,7 @@ use common::sense;
 use DBI;
 
 our $AUTOLOAD;
-our $VERSION = "2.1008";
+our $VERSION = "2.1012";
 our $CNF_ENV = "ME_CNF";
 our $USER_ENV = "ME_USER";
 our $PASS_ENV = "ME_PASS";
@@ -125,11 +134,43 @@ sub AUTOLOAD {
     my $handle = $this->handle;
 
     if( $handle->can($sub) ) {
-        no strict 'refs';
-        return $handle->$sub(
-            (ref($_[0]) eq "MySQL::Easy::sth" ? $_[0]->{sth} : $_[0]), # cheap and not "gone away" recoverable
-            @_[1 .. $#_],
-        );
+        my $wa = wantarray;
+        my ($err, $warn, $ret, @ret);
+
+        EVAL_IT: eval {
+            no strict 'refs';
+            local $SIG{__WARN__} = sub { $warn = "@_"; };
+
+            if( wantarray ) {
+                @ret = $handle->$sub(
+                    (ref($_[0]) eq "MySQL::Easy::sth" ? $_[0]->{sth} : $_[0]), # cheap and not "gone away" recoverable
+                    @_[1 .. $#_],
+                );
+            } else {
+                $ret = $handle->$sub(
+                    (ref($_[0]) eq "MySQL::Easy::sth" ? $_[0]->{sth} : $_[0]), # cheap and not "gone away" recoverable
+                    @_[1 .. $#_],
+                );
+            }
+        };
+
+        $err = $@;
+
+        if( $warn and not $err ) {
+            $err = $warn;
+            chomp $err;
+        }
+
+        if( $err ) {
+            1 while $err =~ s/\s+at(?:\s+\S+)?\s+line\s+\d+\.?$//;
+
+            # DBD::mysql::db selectall_hashref failed: You have an error in your SQL syntax; check the manual that corresponds to your MySQL serve
+            $err =~ s/DBD::mysql::dbh? \S+ failed:\s*//;
+
+            croak "ERROR executing $sub(): $err";
+        }
+
+        return ($wa ? @ret : $ret);
 
     } else {
         croak "$sub is not a member of " . ref($handle);
@@ -173,7 +214,7 @@ sub new {
     $this = bless {}, $this;
 
     $this->{dbase} = shift; croak "dbase = '$this->{dbase}'?" unless $this->{dbase};
-    $this->{dbh} = $this->{dbase} if ref($this->{dbase}) eq "DBI::db";
+    $this->{dbh} = $this->{dbase} if ref($this->{dbase}) and $this->{dbase}->isa("DBI::db");
 
     my $args = shift;
     my $tr   = ref($args) ? delete $args->{trace} : $args;
@@ -231,7 +272,10 @@ sub unlock {
 sub ready {
     my $this = shift;
 
-    return new MySQL::Easy::sth( $this, @_ );
+    my $sth = MySQL::Easy::sth->new( $this, @_ );
+       $sth->{_ready_caller} = [ caller ];
+
+    return $sth;
 }
 # }}}
 # firstcol {{{
@@ -239,16 +283,21 @@ sub firstcol {
     my $this = shift;
     my $query = shift;
 
-    return $this->handle->selectcol_arrayref($query, undef, @_);
+    my $r = eval { $this->handle->selectcol_arrayref($query, undef, @_) };
+    croak $@ unless $r;
+
+    return wantarray ? @$r : $r;
 }
 # }}}
 # firstval {{{
 sub firstval {
     my $this = shift;
     my $query = shift;
-    my $ar = $this->handle->selectcol_arrayref($query, undef, @_);
-    return undef unless ref $ar;
-    return $ar->[0];
+
+    my $r = eval { $this->handle->selectcol_arrayref($query, undef, @_) };
+    croak $@ unless $r;
+
+    return $r->[0];
 }
 # }}}
 # thread_id {{{
@@ -302,9 +351,15 @@ sub handle {
     $this->{dbase} =      "test" unless $this->{dbase};
     $this->{trace} =           0 unless $this->{trace};
 
-    $this->{dbh}->disconnect if $this->{dbh}; # curiously, sometimes we do have a handle, but the ping doesn't work
-                                              # if we replace the handle, DBI complains about not disconnecting.
-                                              # Heh.  It's gone dude, let it go.
+    if( $this->{dbh} ) {
+        eval {
+            local $SIG{__WARN__} = sub {};  # Curiously, sometimes we do have a handle, but the ping doesn't work.
+                                            # If we replace the handle, DBI complains about not disconnecting.
+                                            # If we disconnect, it complains about not desting statement handles.
+                                            # Heh.  It's gone dude, let it go.
+            $this->{dbh}->disconnect;
+        };
+    }
 
     $this->{dbh} =
     DBI->connect("DBI:mysql:$this->{dbase}:host=$this->{host}:port=$this->{port}",
