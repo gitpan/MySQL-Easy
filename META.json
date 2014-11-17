@@ -4,7 +4,7 @@
       "unknown"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.64, CPAN::Meta::Converter version 2.112621",
+   "generated_by" : "ExtUtils::MakeMaker version 6.98, CPAN::Meta::Converter version 2.140640",
    "keywords" : [
       "mysql",
       "helper",
@@ -27,19 +27,19 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : 0
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : 0
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "runtime" : {
          "requires" : {
-            "DBD::mysql" : 0,
-            "DBI" : 0,
-            "common::sense" : 0,
+            "DBD::mysql" : "0",
+            "DBI" : "0",
+            "common::sense" : "0",
             "perl" : "5.006001"
          }
       }
@@ -50,5 +50,5 @@
          "url" : "http://github.com/jettero/mysql--easy"
       }
    },
-   "version" : "2.1012"
+   "version" : "2.1019"
 }
